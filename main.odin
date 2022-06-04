@@ -1,13 +1,38 @@
 package main
 
 import "core:fmt"
+import "core:math"
+import "core:math/linalg"
 
 import pt "path_tracer"
 
-main :: proc() {
-	IMAGE_WIDTH  :: 256
-	IMAGE_HEIGHT :: 256
+/*
+	Use a right-handed coordinate system, where y points up, x to the
+	right, and z outward.
+*/
 
+ASPECT_RATIO :: 16.0 / 9.0
+IMAGE_WIDTH  :: 400
+IMAGE_HEIGHT :: int(IMAGE_WIDTH / ASPECT_RATIO)
+
+// Viewport refers to the part of the screen that contains the portion of the
+// world to display.
+VIEWPORT_WIDTH  :: ASPECT_RATIO * VIEWPORT_HEIGHT
+VIEWPORT_HEIGHT :: 2.0
+
+// Focal length refers to the distance between the projection plane and the
+// projection point.
+FOCAL_LENGTH    :: 1.0
+
+ORIGIN     :: pt.Point3{0, 0, 0}
+HORIZONTAL :: pt.Vector3{VIEWPORT_WIDTH, 0, 0}
+VERTICAL   :: pt.Vector3{0, VIEWPORT_HEIGHT, 0}
+
+// This calculation cannot be stored as a constant since Odin does not
+// currently support array programming at compile time.
+lower_left := ORIGIN - HORIZONTAL / 2 - VERTICAL / 2 - pt.Vector3{0, 0, FOCAL_LENGTH}
+
+main :: proc() {
 	// Write PPM (Portable Pixmap Format) header, where 255 represents
 	// maximum value of a color channel.
 	fmt.printf("P3\n%i %i\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT)
@@ -16,13 +41,38 @@ main :: proc() {
 	for j := IMAGE_HEIGHT - 1; j >= 0; j -= 1 {
 		fmt.eprintf("\rscanlines remaining: %i", j)
 		for i := 0; i < IMAGE_WIDTH; i += 1 {
-			pixel_color := pt.Color{
-				f64(i) / (IMAGE_WIDTH - 1),
-				f64(j) / (IMAGE_HEIGHT - 1),
-				0.25,
+			// Together, u and v represent the ray endpoint on the
+			// screen.
+			u := f64(i) / f64(IMAGE_WIDTH - 1)
+			v := f64(j) / f64(IMAGE_HEIGHT - 1)
+
+			r := pt.Ray{
+				ORIGIN,
+				lower_left + u * HORIZONTAL + v * VERTICAL - ORIGIN,
 			}
-			pt.write_color(pixel_color)
+
+			pt.write_color(ray_color(r))
 		}
 	}
 	fmt.eprintln()
+}
+
+lerp :: #force_inline proc(start_value, end_value: pt.Color, t: f64) -> pt.Color {
+	return (1 - t) * start_value + t * end_value
+}
+
+ray_color :: proc(r: pt.Ray) -> pt.Color {
+	WHITE :: pt.Color{1, 1, 1}
+	BLUE  :: pt.Color{0.5, 0.7, 1.0}
+
+	// Scale each coordinate of the vector to a value between -1 and 1.
+	unit_direction := linalg.normalize(r.direction)
+
+	// Scale to a value between 0 and 1 instead of -1 and 1.
+	t := 0.5 * (unit_direction.y + 1)
+
+	// Linearly blend white and blue as a function of the (normalized)
+	// y-coordinate. In graphics, programmers refer to this calculation as
+	// a linear interpolation or, more colloquially, lerp.
+	return lerp(WHITE, BLUE, t)
 }
