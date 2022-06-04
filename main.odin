@@ -12,6 +12,7 @@ main :: proc() {
 
 	// Write pixels in rows from left to right, top to bottom.
 	for j := IMAGE_HEIGHT - 1; j >= 0; j -= 1 {
+		fmt.eprintf("\rscanlines remaining: %i", j)
 		for i := 0; i < IMAGE_WIDTH; i += 1 {
 			// Calculate each color channel between 0 and 1,
 			// inclusive.
@@ -28,4 +29,5 @@ main :: proc() {
 			fmt.println(ir, ig, ib)
 		}
 	}
+	fmt.eprintln()
 }
