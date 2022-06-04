@@ -2,6 +2,8 @@ package main
 
 import "core:fmt"
 
+import pt "path_tracer"
+
 main :: proc() {
 	IMAGE_WIDTH  :: 256
 	IMAGE_HEIGHT :: 256
@@ -14,19 +16,12 @@ main :: proc() {
 	for j := IMAGE_HEIGHT - 1; j >= 0; j -= 1 {
 		fmt.eprintf("\rscanlines remaining: %i", j)
 		for i := 0; i < IMAGE_WIDTH; i += 1 {
-			// Calculate each color channel between 0 and 1,
-			// inclusive.
-			r := f64(i) / (IMAGE_WIDTH - 1)
-			g := f64(j) / (IMAGE_HEIGHT - 1)
-			b := 0.25
-
-			// Format the previous calculations as integers between
-			// 0 and 255.
-			ir := int(255.999 * r)
-			ib := int(255.999 * b)
-			ig := int(255.999 * g)
-
-			fmt.println(ir, ig, ib)
+			pixel_color := pt.Color{
+				f64(i) / (IMAGE_WIDTH - 1),
+				f64(j) / (IMAGE_HEIGHT - 1),
+				0.25,
+			}
+			pt.write_color(pixel_color)
 		}
 	}
 	fmt.eprintln()
