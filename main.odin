@@ -92,21 +92,32 @@ hit_sphere :: proc(center: pt.Point3, radius: f64, r: pt.Ray) -> f64 {
 		The variables in the code map directly to the variables in the
 		equation above:
 
-			dot(oc, oc) - radius * radius ->  (A - C) - r^2
-			dot(r.direction, r.direction) ->  (b . b)
-			     2 * dot(r.direction, oc) -> 2(b . (A - C))
-			           r.origion - center ->  (A - C)
+			dot(oc, oc) - radius * radius ->  (A - C) - r^2      [c]
+			dot(r.direction, r.direction) ->  (b . b)            [a]
+			     2 * dot(r.direction, oc) -> 2(b . (A - C))      [b]
+			           r.origion - center ->  (A - C)            [ ]
+
+		Because the square length of a vector is the result of the dot
+		product of the vector with itself, some code can be simplied
+		further:
+
+			length2(oc) - radius * radius -> (A - C) - r^2       [c]
+			         length2(r.direction) -> (b . b)             [a]
+
+		Also, since b contains a factor of 2, it's possible to even
+		further simplify the quadratic equation as a whole by factoring
+		out 2.
 	*/
 
 	// Cache parts of the discriminant.
 	oc := r.origin - center
-	a := linalg.dot(r.direction, r.direction)
-	b := 2 * linalg.dot(r.direction, oc)
-	c := linalg.dot(oc, oc) - radius * radius
+	a := linalg.length2(r.direction)
+	half_b := linalg.dot(oc, r.direction)
+	c :=  linalg.length2(oc) - radius * radius
 
 	// The discriminant is the part under the root in the quadratic
 	// equation.
-	discriminant := b * b - 4 * a * c;
+	discriminant := half_b * half_b - a * c;
 
 	if discriminant < 0 {
 		// A negative discriminant indicates no real solutions exist.
@@ -114,7 +125,7 @@ hit_sphere :: proc(center: pt.Point3, radius: f64, r: pt.Ray) -> f64 {
 	} else {
 		// A nonnegative solution indicates at least one real solution
 		// exists. Use quadratic formula to solve for t.
-		return (-b - math.sqrt(discriminant)) / (2 * a)
+		return (-half_b - math.sqrt(discriminant)) / a
 	}
 }
 
