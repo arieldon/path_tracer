@@ -57,13 +57,73 @@ main :: proc() {
 	fmt.eprintln()
 }
 
+hit_sphere :: proc(center: pt.Point3, radius: f64, r: pt.Ray) -> bool {
+	/*
+		The equation of a sphere with radius r centered at some point
+		(a, b, c) may be calculated with the following equation:
+
+			(x - a)^2 + (y - b)^2 + (z - c)^2 = r^2
+
+		The vector from center C (a, b, c) to some point P (x, y, z)
+		may be expressed as (P - C). Therefore, the vector form of the
+		equation of a sphere suitable for Odin's array programming
+		appears as such:
+
+			(P - C)^2 = r^2
+
+		Any point P that satisfies this equation sits on the sphere. A
+		point within the sphere returns a value less than r^2; a point
+		outside the sphere returns a value greater than r^2; a point on
+		the sphere returns r^2.
+
+		A ray represents points with equation P(t) = A + tb.
+
+			(P(t) - C)^2 = (A + tb - C)^2 = (A + tb - C)(A + tb - C) = r^2
+
+		Expand and move all terms to the left side of the equation.
+		Note, the period or dot "." indicates a dot product of vectors.
+
+			t^2(b . b) + 2t(b . (A - C)) + (A - C) . (A - C) - r^2 = 0
+
+		Then, to determine whether a ray intersects a sphere at some
+		point, solve the equation directly above for t using the
+		quadratic equation -- all other variables are known.
+
+		The variables in the code map directly to the variables in the
+		equation above:
+
+			dot(oc, oc) - radius * radius ->  (A - C) - r^2
+			dot(r.direction, r.direction) ->  (b . b)
+			     2 * dot(r.direction, oc) -> 2(b . (A - C))
+			           r.origion - center ->  (A - C)
+	*/
+
+	// Cache parts of the discriminant.
+	oc := r.origin - center
+	a := linalg.dot(r.direction, r.direction)
+	b := 2 * linalg.dot(r.direction, oc)
+	c := linalg.dot(oc, oc) - radius * radius
+
+	// The discriminant is the part under the root in the quadratic
+	// equation.
+	discriminant := b * b - 4 * a * c;
+
+	// A positive discriminant indicates two real solutions exist.
+	return discriminant > 0
+}
+
 lerp :: #force_inline proc(start_value, end_value: pt.Color, t: f64) -> pt.Color {
 	return (1 - t) * start_value + t * end_value
 }
 
 ray_color :: proc(r: pt.Ray) -> pt.Color {
+	RED   :: pt.Color{1, 0, 0}
 	WHITE :: pt.Color{1, 1, 1}
 	BLUE  :: pt.Color{0.5, 0.7, 1.0}
+
+	// Place a sphere and return red instead of a blend of white and blue
+	// when a ray intersects it.
+	if hit_sphere(pt.Point3{0, 0, -1}, 0.5, r) do return RED
 
 	// Scale each coordinate of the vector to a value between -1 and 1.
 	unit_direction := linalg.normalize(r.direction)
