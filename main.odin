@@ -31,7 +31,7 @@ main :: proc() {
 
 	// Write pixels in rows from left to right, top to bottom.
 	for j := IMAGE_HEIGHT - 1; j >= 0; j -= 1 {
-		fmt.eprintf("\rscanlines remaining: %i", j)
+		fmt.eprintf("\rscanlines remaining: %3i", j)
 		for i := 0; i < IMAGE_WIDTH; i += 1 {
 			// Sample each pixel several times and sum the colors
 			// of their rays.
