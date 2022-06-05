@@ -33,6 +33,11 @@ VERTICAL   :: pt.Vector3{0, VIEWPORT_HEIGHT, 0}
 lower_left := ORIGIN - HORIZONTAL / 2 - VERTICAL / 2 - pt.Vector3{0, 0, FOCAL_LENGTH}
 
 main :: proc() {
+	world: [dynamic]pt.Sphere
+	defer delete(world)
+	append(&world, pt.Sphere{pt.Point3{0, 0, -1}, 0.5})
+	append(&world, pt.Sphere{pt.Point3{0, -100.5, -1}, 100})
+
 	// Write PPM (Portable Pixmap Format) header, where 255 represents
 	// maximum value of a color channel.
 	fmt.printf("P3\n%i %i\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT)
@@ -51,115 +56,35 @@ main :: proc() {
 				lower_left + u * HORIZONTAL + v * VERTICAL - ORIGIN,
 			}
 
-			pt.write_color(ray_color(&r))
+			pt.write_color(ray_color(&r, world))
 		}
 	}
 	fmt.eprintln()
-}
-
-hit_sphere :: proc(center: pt.Point3, radius: f64, r: pt.Ray) -> f64 {
-	/*
-		The equation of a sphere with radius r centered at some point
-		(a, b, c) may be calculated with the following equation:
-
-			(x - a)^2 + (y - b)^2 + (z - c)^2 = r^2
-
-		The vector from center C (a, b, c) to some point P (x, y, z)
-		may be expressed as (P - C). Therefore, the vector form of the
-		equation of a sphere suitable for Odin's array programming
-		appears as such:
-
-			(P - C)^2 = r^2
-
-		Any point P that satisfies this equation sits on the sphere. A
-		point within the sphere returns a value less than r^2; a point
-		outside the sphere returns a value greater than r^2; a point on
-		the sphere returns r^2.
-
-		A ray represents points with equation P(t) = A + tb.
-
-			(P(t) - C)^2 = (A + tb - C)^2 = (A + tb - C)(A + tb - C) = r^2
-
-		Expand and move all terms to the left side of the equation.
-		Note, the period or dot "." indicates a dot product of vectors.
-
-			t^2(b . b) + 2t(b . (A - C)) + (A - C) . (A - C) - r^2 = 0
-
-		Then, to determine whether a ray intersects a sphere at some
-		point, solve the equation directly above for t using the
-		quadratic equation -- all other variables are known.
-
-		The variables in the code map directly to the variables in the
-		equation above:
-
-			dot(oc, oc) - radius * radius ->  (A - C) - r^2      [c]
-			dot(r.direction, r.direction) ->  (b . b)            [a]
-			     2 * dot(r.direction, oc) -> 2(b . (A - C))      [b]
-			           r.origion - center ->  (A - C)            [ ]
-
-		Because the square length of a vector is the result of the dot
-		product of the vector with itself, some code can be simplied
-		further:
-
-			length2(oc) - radius * radius -> (A - C) - r^2       [c]
-			         length2(r.direction) -> (b . b)             [a]
-
-		Also, since b contains a factor of 2, it's possible to even
-		further simplify the quadratic equation as a whole by factoring
-		out 2.
-	*/
-
-	// Cache parts of the discriminant.
-	oc := r.origin - center
-	a := linalg.length2(r.direction)
-	half_b := linalg.dot(oc, r.direction)
-	c :=  linalg.length2(oc) - radius * radius
-
-	// The discriminant is the part under the root in the quadratic
-	// equation.
-	discriminant := half_b * half_b - a * c;
-
-	if discriminant < 0 {
-		// A negative discriminant indicates no real solutions exist.
-		return -1
-	} else {
-		// A nonnegative solution indicates at least one real solution
-		// exists. Use quadratic formula to solve for t.
-		return (-half_b - math.sqrt(discriminant)) / a
-	}
 }
 
 lerp :: #force_inline proc(start_value, end_value: pt.Color, t: f64) -> pt.Color {
 	return (1 - t) * start_value + t * end_value
 }
 
-ray_color :: proc(r: ^pt.Ray) -> pt.Color {
-	RED   :: pt.Color{1, 0, 0}
+ray_color :: proc(r: ^pt.Ray, world: [dynamic]pt.Sphere) -> pt.Color {
 	WHITE :: pt.Color{1, 1, 1}
 	BLUE  :: pt.Color{0.5, 0.7, 1.0}
 
-	if t := hit_sphere(pt.Point3{0, 0, -1}, 0.5, r^); t > 0 {
-		// N represents a surface normal: a vector perpendicular to the
-		// surface of a shape at the point of intersection. In this
-		// case, it's the vector perpendicular to the sphere at its
-		// radius.
-		N := linalg.normalize(pt.at(r, t) - {0, 0, -1})
-
+	rec: pt.Hit_Record
+	if pt.hit(world, r, 0, math.INF_F64, &rec) {
 		// Multiply by 0.5 to map each to a value between 0 and 1.
 		// Then, map each component of the vector to a color channel.
-		return 0.5 * {N.x + 1, N.y + 1, N.z + 1}
-	} else {
-		// Scale each coordinate of the vector to a value between -1
-		// and 1.
-		unit_direction := linalg.normalize(r.direction)
-
-		// Scale to a value between 0 and 1 instead of -1 and 1.
-		t = 0.5 * (unit_direction.y + 1)
-
-		// Linearly blend white and blue as a function of the
-		// (normalized) y-coordinate. In graphics, programmers refer to
-		// this calculation as a linear interpolation or, more
-		// colloquially, lerp.
-		return lerp(WHITE, BLUE, t)
+		return 0.5 * (rec.normal + {1, 1, 1})
 	}
+
+	// Scale each coordinate of the vector to a value between -1 and 1.
+	unit_direction := linalg.normalize(r.direction)
+
+	// Scale to a value between 0 and 1 instead of -1 and 1.
+	t := 0.5 * (unit_direction.y + 1)
+
+	// Linearly blend white and blue as a function of the (normalized)
+	// y-coordinate. In graphics, programmers refer to this calculation as
+	// a linear interpolation or, more colloquially, lerp.
+	return lerp(WHITE, BLUE, t)
 }
