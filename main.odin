@@ -51,13 +51,13 @@ main :: proc() {
 				lower_left + u * HORIZONTAL + v * VERTICAL - ORIGIN,
 			}
 
-			pt.write_color(ray_color(r))
+			pt.write_color(ray_color(&r))
 		}
 	}
 	fmt.eprintln()
 }
 
-hit_sphere :: proc(center: pt.Point3, radius: f64, r: pt.Ray) -> bool {
+hit_sphere :: proc(center: pt.Point3, radius: f64, r: pt.Ray) -> f64 {
 	/*
 		The equation of a sphere with radius r centered at some point
 		(a, b, c) may be calculated with the following equation:
@@ -108,31 +108,47 @@ hit_sphere :: proc(center: pt.Point3, radius: f64, r: pt.Ray) -> bool {
 	// equation.
 	discriminant := b * b - 4 * a * c;
 
-	// A positive discriminant indicates two real solutions exist.
-	return discriminant > 0
+	if discriminant < 0 {
+		// A negative discriminant indicates no real solutions exist.
+		return -1
+	} else {
+		// A nonnegative solution indicates at least one real solution
+		// exists. Use quadratic formula to solve for t.
+		return (-b - math.sqrt(discriminant)) / (2 * a)
+	}
 }
 
 lerp :: #force_inline proc(start_value, end_value: pt.Color, t: f64) -> pt.Color {
 	return (1 - t) * start_value + t * end_value
 }
 
-ray_color :: proc(r: pt.Ray) -> pt.Color {
+ray_color :: proc(r: ^pt.Ray) -> pt.Color {
 	RED   :: pt.Color{1, 0, 0}
 	WHITE :: pt.Color{1, 1, 1}
 	BLUE  :: pt.Color{0.5, 0.7, 1.0}
 
-	// Place a sphere and return red instead of a blend of white and blue
-	// when a ray intersects it.
-	if hit_sphere(pt.Point3{0, 0, -1}, 0.5, r) do return RED
+	if t := hit_sphere(pt.Point3{0, 0, -1}, 0.5, r^); t > 0 {
+		// N represents a surface normal: a vector perpendicular to the
+		// surface of a shape at the point of intersection. In this
+		// case, it's the vector perpendicular to the sphere at its
+		// radius.
+		N := linalg.normalize(pt.at(r, t) - {0, 0, -1})
 
-	// Scale each coordinate of the vector to a value between -1 and 1.
-	unit_direction := linalg.normalize(r.direction)
+		// Multiply by 0.5 to map each to a value between 0 and 1.
+		// Then, map each component of the vector to a color channel.
+		return 0.5 * {N.x + 1, N.y + 1, N.z + 1}
+	} else {
+		// Scale each coordinate of the vector to a value between -1
+		// and 1.
+		unit_direction := linalg.normalize(r.direction)
 
-	// Scale to a value between 0 and 1 instead of -1 and 1.
-	t := 0.5 * (unit_direction.y + 1)
+		// Scale to a value between 0 and 1 instead of -1 and 1.
+		t = 0.5 * (unit_direction.y + 1)
 
-	// Linearly blend white and blue as a function of the (normalized)
-	// y-coordinate. In graphics, programmers refer to this calculation as
-	// a linear interpolation or, more colloquially, lerp.
-	return lerp(WHITE, BLUE, t)
+		// Linearly blend white and blue as a function of the
+		// (normalized) y-coordinate. In graphics, programmers refer to
+		// this calculation as a linear interpolation or, more
+		// colloquially, lerp.
+		return lerp(WHITE, BLUE, t)
+	}
 }
