@@ -1,12 +1,13 @@
 package path_tracer
 
 import "core:fmt"
+import "core:math/linalg"
 
 write_color :: proc(pixel_color: Color, samples_per_pixel: uint) {
 	// Assuming samples_per_pixel > 1, average several colors to blend
 	// foreground with background and create smoother edges, i.e. perform
-	// antialiasing.
-	average_color := pixel_color * (1.0 / f64(samples_per_pixel))
+	// antialiasing. Take the square root to correct gamma.
+	average_color := linalg.sqrt(pixel_color * (1.0 / f64(samples_per_pixel)))
 
 	// Translate each color channel from a value between 0 and 1 to a value
 	// between 0 and 255.

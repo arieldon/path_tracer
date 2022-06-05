@@ -15,6 +15,7 @@ import pt "path_tracer"
 IMAGE_WIDTH  :: 400
 IMAGE_HEIGHT :: int(IMAGE_WIDTH / pt.ASPECT_RATIO)
 
+MAX_DEPTH         ::  50
 SAMPLES_PER_PIXEL :: 100
 
 main :: proc() {
@@ -42,7 +43,7 @@ main :: proc() {
 				u := (f64(i) + rand.float64())  / f64(IMAGE_WIDTH - 1)
 				v := (f64(j) + rand.float64()) / f64(IMAGE_HEIGHT - 1)
 				r := pt.get_ray(&camera, u, v)
-				pixel_color += ray_color(&r, world)
+				pixel_color += ray_color(&r, world, MAX_DEPTH)
 			}
 
 			// Use the average color of all samples in the image.
@@ -56,15 +57,24 @@ lerp :: #force_inline proc(start_value, end_value: pt.Color, t: f64) -> pt.Color
 	return (1 - t) * start_value + t * end_value
 }
 
-ray_color :: proc(r: ^pt.Ray, world: [dynamic]pt.Sphere) -> pt.Color {
+ray_color :: proc(r: ^pt.Ray, world: [dynamic]pt.Sphere, depth: int) -> pt.Color {
 	WHITE :: pt.Color{1, 1, 1}
 	BLUE  :: pt.Color{0.5, 0.7, 1.0}
 
+	// Limit recursion.
+	if depth <= 0 do return pt.Color{}
+
 	rec: pt.Hit_Record
-	if pt.hit(world, r, 0, math.INF_F64, &rec) {
-		// Multiply by 0.5 to map each to a value between 0 and 1.
-		// Then, map each component of the vector to a color channel.
-		return 0.5 * (rec.normal + {1, 1, 1})
+	if pt.hit(world, r, 0.0001, math.INF_F64, &rec) {
+		// There are two unit radius spheres tanget to the collision
+		// point p between a ray and a surface: one with a center (p - n)
+		// inside the surface, one with a center (p + n) outside the
+		// surface. Generate a random point within the unit radius
+		// sphere on the same side as the origin of the ray, and send
+		// another ray from the collision point to this generated
+		// random point.
+		target := rec.p + rec.normal + pt.generate_random_vector_in_unit_sphere()
+		return 0.5 * ray_color(&pt.Ray{rec.p, target - rec.p}, world, depth - 1)
 	}
 
 	// Scale each coordinate of the vector to a value between -1 and 1.
