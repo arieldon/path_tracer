@@ -2,12 +2,17 @@ package path_tracer
 
 import "core:fmt"
 
-write_color :: proc(pixel_color: Color) {
+write_color :: proc(pixel_color: Color, samples_per_pixel: uint) {
+	// Assuming samples_per_pixel > 1, average several colors to blend
+	// foreground with background and create smoother edges, i.e. perform
+	// antialiasing.
+	average_color := pixel_color * (1.0 / f64(samples_per_pixel))
+
 	// Translate each color channel from a value between 0 and 1 to a value
 	// between 0 and 255.
-	r := int(255.999 * pixel_color.r)
-	g := int(255.999 * pixel_color.g)
-	b := int(255.999 * pixel_color.b)
+	r := int(256 * clamp(average_color.r, 0.0, 0.999))
+	g := int(256 * clamp(average_color.g, 0.0, 0.999))
+	b := int(256 * clamp(average_color.b, 0.0, 0.999))
 
 	// Write the translated color channels to standard output, 1 pixel per
 	// line.

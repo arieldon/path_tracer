@@ -3,6 +3,7 @@ package main
 import "core:fmt"
 import "core:math"
 import "core:math/linalg"
+import "core:math/rand"
 
 import pt "path_tracer"
 
@@ -13,6 +14,8 @@ import pt "path_tracer"
 
 IMAGE_WIDTH  :: 400
 IMAGE_HEIGHT :: int(IMAGE_WIDTH / pt.ASPECT_RATIO)
+
+SAMPLES_PER_PIXEL :: 100
 
 main :: proc() {
 	camera := pt.init_camera()
@@ -30,12 +33,20 @@ main :: proc() {
 	for j := IMAGE_HEIGHT - 1; j >= 0; j -= 1 {
 		fmt.eprintf("\rscanlines remaining: %i", j)
 		for i := 0; i < IMAGE_WIDTH; i += 1 {
-			// Together, u and v represent the ray endpoint on the
-			// screen.
-			u := f64(i) / f64(IMAGE_WIDTH - 1)
-			v := f64(j) / f64(IMAGE_HEIGHT - 1)
-			r := pt.get_ray(&camera, u, v)
-			pt.write_color(ray_color(&r, world))
+			// Sample each pixel several times and sum the colors
+			// of their rays.
+			pixel_color := pt.Color{}
+			for s in 0..<SAMPLES_PER_PIXEL {
+				// Together, u and v represent the ray endpoint
+				// on the screen.
+				u := (f64(i) + rand.float64())  / f64(IMAGE_WIDTH - 1)
+				v := (f64(j) + rand.float64()) / f64(IMAGE_HEIGHT - 1)
+				r := pt.get_ray(&camera, u, v)
+				pixel_color += ray_color(&r, world)
+			}
+
+			// Use the average color of all samples in the image.
+			pt.write_color(pixel_color, SAMPLES_PER_PIXEL);
 		}
 	}
 	fmt.eprintln()
