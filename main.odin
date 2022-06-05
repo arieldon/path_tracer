@@ -11,28 +11,12 @@ import pt "path_tracer"
 	right, and z outward.
 */
 
-ASPECT_RATIO :: 16.0 / 9.0
 IMAGE_WIDTH  :: 400
-IMAGE_HEIGHT :: int(IMAGE_WIDTH / ASPECT_RATIO)
-
-// Viewport refers to the part of the screen that contains the portion of the
-// world to display.
-VIEWPORT_WIDTH  :: ASPECT_RATIO * VIEWPORT_HEIGHT
-VIEWPORT_HEIGHT :: 2.0
-
-// Focal length refers to the distance between the projection plane and the
-// projection point.
-FOCAL_LENGTH    :: 1.0
-
-ORIGIN     :: pt.Point3{0, 0, 0}
-HORIZONTAL :: pt.Vector3{VIEWPORT_WIDTH, 0, 0}
-VERTICAL   :: pt.Vector3{0, VIEWPORT_HEIGHT, 0}
-
-// This calculation cannot be stored as a constant since Odin does not
-// currently support array programming at compile time.
-lower_left := ORIGIN - HORIZONTAL / 2 - VERTICAL / 2 - pt.Vector3{0, 0, FOCAL_LENGTH}
+IMAGE_HEIGHT :: int(IMAGE_WIDTH / pt.ASPECT_RATIO)
 
 main :: proc() {
+	camera := pt.init_camera()
+
 	world: [dynamic]pt.Sphere
 	defer delete(world)
 	append(&world, pt.Sphere{pt.Point3{0, 0, -1}, 0.5})
@@ -50,12 +34,7 @@ main :: proc() {
 			// screen.
 			u := f64(i) / f64(IMAGE_WIDTH - 1)
 			v := f64(j) / f64(IMAGE_HEIGHT - 1)
-
-			r := pt.Ray{
-				ORIGIN,
-				lower_left + u * HORIZONTAL + v * VERTICAL - ORIGIN,
-			}
-
+			r := pt.get_ray(&camera, u, v)
 			pt.write_color(ray_color(&r, world))
 		}
 	}
