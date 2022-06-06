@@ -73,7 +73,7 @@ ray_color :: proc(r: ^pt.Ray, world: [dynamic]pt.Sphere, depth: int) -> pt.Color
 		// sphere on the same side as the origin of the ray, and send
 		// another ray from the collision point to this generated
 		// random point.
-		target := rec.p + rec.normal + pt.generate_random_vector_in_unit_sphere()
+		target := rec.p + pt.generate_random_vector_in_hemisphere(rec.normal)
 		return 0.5 * ray_color(&pt.Ray{rec.p, target - rec.p}, world, depth - 1)
 	}
 

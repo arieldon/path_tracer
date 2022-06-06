@@ -17,3 +17,13 @@ generate_random_vector_in_unit_sphere :: proc() -> (p: Vector3) {
 		return
 	}
 }
+
+generate_random_unit_vector :: proc() -> (p: Vector3) {
+	return linalg.normalize(generate_random_vector_in_unit_sphere())
+}
+
+generate_random_vector_in_hemisphere :: proc(normal: Vector3) -> (v: Vector3) {
+	v = generate_random_vector_in_unit_sphere()
+	if linalg.dot(v, normal) <= 0.0 do v *= -1
+	return
+}
