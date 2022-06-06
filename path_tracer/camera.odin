@@ -1,8 +1,7 @@
 package path_tracer
 
+// Aspect ratio refers to the ratio of image width to image height.
 ASPECT_RATIO :: 16.0 / 9.0
-IMAGE_WIDTH  :: 400
-IMAGE_HEIGHT :: IMAGE_WIDTH / ASPECT_RATIO
 
 // Viewport refers to the part of the screen that contains the portion of the
 // world to display.

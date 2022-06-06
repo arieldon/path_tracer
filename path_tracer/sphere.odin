@@ -71,6 +71,7 @@ hit_sphere :: proc(s: ^Sphere, r: ^Ray, t_min, t_max: f64, rec: ^Hit_Record) -> 
 	if (discriminant < 0) do return false
 	sqrtd := linalg.sqrt(discriminant)
 
+	// Use the nearest root within specified range.
 	root := (-half_b - sqrtd) / a
 	if (root < t_min || t_max < root) {
 		root = (-half_b + sqrtd) / a
