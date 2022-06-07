@@ -34,3 +34,12 @@ generate_random_vector_in_hemisphere :: proc(normal: Vector3) -> (v: Vector3) {
 	if linalg.dot(v, normal) <= 0.0 do v *= -1
 	return
 }
+
+near_zero :: #force_inline proc(v: Vector3) -> bool {
+	s := 1e-8
+	return abs(v.x) < s && abs(v.y) < s && abs(v.z) < s
+}
+
+reflect :: #force_inline proc(v, n: Vector3) -> Vector3 {
+	return v - 2 * linalg.dot(v, n) * n
+}

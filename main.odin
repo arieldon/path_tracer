@@ -23,8 +23,16 @@ main :: proc() {
 
 	world: [dynamic]pt.Sphere
 	defer delete(world)
-	append(&world, pt.Sphere{pt.Point3{0, 0, -1}, 0.5})
-	append(&world, pt.Sphere{pt.Point3{0, -100.5, -1}, 100})
+
+	material_ground: pt.Material = pt.Lambertian{pt.Color{0.8, 0.8, 0}}
+	material_center: pt.Material = pt.Lambertian{pt.Color{0.7, 0.3, 0.3}}
+	material_left: pt.Material = pt.Metal{pt.Color{0.8, 0.8, 0.8}}
+	material_right: pt.Material = pt.Metal{pt.Color{0.8, 0.6, 0.2}}
+
+	append(&world, pt.Sphere{pt.Point3{0, -100.5, -1}, 100, &material_ground})
+	append(&world, pt.Sphere{pt.Point3{0, 0, -1}, 0.5, &material_center})
+	append(&world, pt.Sphere{pt.Point3{-1, 0, -1}, 0.5, &material_left})
+	append(&world, pt.Sphere{pt.Point3{1, 0, -1}, 0.5, &material_right})
 
 	// Write PPM (Portable Pixmap Format) header, where 255 represents
 	// maximum value of a color channel.
@@ -66,15 +74,13 @@ ray_color :: proc(r: ^pt.Ray, world: [dynamic]pt.Sphere, depth: int) -> pt.Color
 
 	rec: pt.Hit_Record
 	if pt.hit(world, r, 0.0001, math.INF_F64, &rec) {
-		// There are two unit radius spheres tanget to the collision
-		// point p between a ray and a surface: one with a center (p - n)
-		// inside the surface, one with a center (p + n) outside the
-		// surface. Generate a random point within the unit radius
-		// sphere on the same side as the origin of the ray, and send
-		// another ray from the collision point to this generated
-		// random point.
-		target := rec.p + pt.generate_random_vector_in_hemisphere(rec.normal)
-		return 0.5 * ray_color(&pt.Ray{rec.p, target - rec.p}, world, depth - 1)
+		scattered: pt.Ray
+		attenuation: pt.Color
+
+		if pt.scatter(rec.material, r, &scattered, &rec, &attenuation) {
+			return attenuation * ray_color(&scattered, world, depth - 1)
+		}
+		return {}
 	}
 
 	// Scale each coordinate of the vector to a value between -1 and 1.

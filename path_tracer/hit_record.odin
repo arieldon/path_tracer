@@ -1,10 +1,12 @@
 package path_tracer
 
+import "core:fmt"
 import "core:math/linalg"
 
 Hit_Record :: struct {
 	p: Point3,
 	normal: Vector3,
+	material: ^Material,
 	t: f64,
 	front_face: bool,
 }

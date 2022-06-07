@@ -5,6 +5,7 @@ import "core:math/linalg"
 Sphere :: struct {
 	center: Point3,
 	radius: f64,
+	material: ^Material,
 }
 
 hit_sphere :: proc(s: ^Sphere, r: ^Ray, t_min, t_max: f64, rec: ^Hit_Record) -> bool {
@@ -80,6 +81,7 @@ hit_sphere :: proc(s: ^Sphere, r: ^Ray, t_min, t_max: f64, rec: ^Hit_Record) -> 
 
 	rec.t = root
 	rec.p = at(r, rec.t)
+	rec.material = s.material
 	outward_normal := (rec.p - s.center) / s.radius
 	set_face_normal(rec, r, &outward_normal)
 
