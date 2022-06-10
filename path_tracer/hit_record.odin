@@ -12,8 +12,8 @@ Hit_Record :: struct {
 }
 
 set_face_normal :: #force_inline proc(rec: ^Hit_Record, r: ^Ray, outward_normal: ^Vector3) {
-	front_face := linalg.dot(r.direction, outward_normal^) < 0
-	rec.normal = front_face ? outward_normal^ : -outward_normal^
+	rec.front_face = linalg.dot(r.direction, outward_normal^) < 0
+	rec.normal = rec.front_face ? outward_normal^ : -outward_normal^
 }
 
 hit :: proc(world: [dynamic]Sphere, r: ^Ray, t_min, t_max: f64, rec: ^Hit_Record) -> bool {
