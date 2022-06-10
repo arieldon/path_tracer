@@ -14,6 +14,17 @@ Lambertian :: struct {
 
 Metal :: struct {
 	albedo: Color,
+	fuzz: f64,
+}
+
+metal :: proc(albedo: Color = {0, 0, 0}, fuzz: f64) -> (m: Metal) {
+	m.albedo = albedo
+	if fuzz < 1 {
+		m.fuzz = fuzz
+	} else {
+		m.fuzz = 1
+	}
+	return
 }
 
 scatter :: proc(
@@ -52,7 +63,7 @@ scatter_metal :: proc(
 	material: ^Metal, r, scattered: ^Ray, rec: ^Hit_Record, attenuation: ^Color,
 ) -> bool {
 	reflected := reflect(linalg.normalize(r.direction), rec.normal)
-	scattered^ = Ray{rec.p, reflected}
+	scattered^ = Ray{rec.p, reflected + material.fuzz * generate_random_vector_in_unit_sphere()}
 	attenuation^ = material.albedo
 	return linalg.dot(scattered.direction, rec.normal) > 0
 }
