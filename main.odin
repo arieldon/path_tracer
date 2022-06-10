@@ -25,9 +25,9 @@ main :: proc() {
 	defer delete(world)
 
 	material_ground: pt.Material = pt.Lambertian{pt.Color{0.8, 0.8, 0}}
-	material_center: pt.Material = pt.Dielectric{1.5}
+	material_center: pt.Material = pt.Lambertian{pt.Color{0.1, 0.2, 0.5}}
 	material_left: pt.Material = pt.Dielectric{1.5}
-	material_right: pt.Material = pt.metal(pt.Color{0.8, 0.6, 0.2}, 1)
+	material_right: pt.Material = pt.metal(pt.Color{0.8, 0.6, 0.2}, 0)
 
 	append(&world, pt.Sphere{pt.Point3{0, -100.5, -1}, 100, &material_ground})
 	append(&world, pt.Sphere{pt.Point3{0, 0, -1}, 0.5, &material_center})

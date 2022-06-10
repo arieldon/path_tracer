@@ -85,8 +85,14 @@ scatter_dielectric :: proc(
 	if (rec.front_face) do refraction_ratio = 1 / material.refraction_index
 
 	unit_direction := linalg.normalize(r.direction)
-	refracted := refract(unit_direction, rec.normal, refraction_ratio)
+	cos_theta := min(linalg.dot(-unit_direction, rec.normal), 1)
+	sin_theta := linalg.sqrt(1 - cos_theta * cos_theta)
 
-	scattered^ = Ray{rec.p, refracted}
+	direction := refract(unit_direction, rec.normal, refraction_ratio)
+	if refraction_ratio * sin_theta > 1 {
+		direction = reflect(unit_direction, rec.normal)
+	}
+
+	scattered^ = Ray{rec.p, direction}
 	return true
 }
