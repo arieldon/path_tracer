@@ -43,3 +43,10 @@ near_zero :: #force_inline proc(v: Vector3) -> bool {
 reflect :: #force_inline proc(v, n: Vector3) -> Vector3 {
 	return v - 2 * linalg.dot(v, n) * n
 }
+
+refract :: proc(uv, n: Vector3, etai_over_etat: f64) -> Vector3 {
+	cos_theta := min(linalg.dot(-uv, n), 1)
+	r_out_perpendicular := etai_over_etat * (uv + cos_theta * n)
+	r_out_parallel := -linalg.sqrt(abs(1 - linalg.length2(r_out_perpendicular))) * n
+	return r_out_perpendicular + r_out_parallel
+}

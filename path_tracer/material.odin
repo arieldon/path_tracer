@@ -6,6 +6,7 @@ import "core:math/linalg"
 Material :: union #no_nil {
 	Lambertian,
 	Metal,
+	Dielectric,
 }
 
 Lambertian :: struct {
@@ -15,6 +16,10 @@ Lambertian :: struct {
 Metal :: struct {
 	albedo: Color,
 	fuzz: f64,
+}
+
+Dielectric :: struct {
+	refraction_index: f64,
 }
 
 metal :: proc(albedo: Color = {0, 0, 0}, fuzz: f64) -> (m: Metal) {
@@ -37,6 +42,8 @@ scatter :: proc(
 		return scatter_lambertain(&m, r, scattered, rec, attenuation)
 	case Metal:
 		return scatter_metal(&m, r, scattered, rec, attenuation)
+	case Dielectric:
+		return scatter_dielectric(&m, r, scattered, rec, attenuation)
 	}
 
 	unreachable()
@@ -66,4 +73,20 @@ scatter_metal :: proc(
 	scattered^ = Ray{rec.p, reflected + material.fuzz * generate_random_vector_in_unit_sphere()}
 	attenuation^ = material.albedo
 	return linalg.dot(scattered.direction, rec.normal) > 0
+}
+
+@private
+scatter_dielectric :: proc(
+	material: ^Dielectric, r, scattered: ^Ray, rec: ^Hit_Record, attenuation: ^Color,
+) -> bool {
+	attenuation^ = Color{1, 1, 1}
+
+	refraction_ratio := material.refraction_index
+	if (rec.front_face) do refraction_ratio = 1 / material.refraction_index
+
+	unit_direction := linalg.normalize(r.direction)
+	refracted := refract(unit_direction, rec.normal, refraction_ratio)
+
+	scattered^ = Ray{rec.p, refracted}
+	return true
 }
