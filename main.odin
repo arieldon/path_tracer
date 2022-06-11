@@ -32,6 +32,7 @@ main :: proc() {
 	append(&world, pt.Sphere{pt.Point3{0, -100.5, -1}, 100, &material_ground})
 	append(&world, pt.Sphere{pt.Point3{0, 0, -1}, 0.5, &material_center})
 	append(&world, pt.Sphere{pt.Point3{-1, 0, -1}, 0.5, &material_left})
+	append(&world, pt.Sphere{pt.Point3{-1, 0, -1}, -0.4, &material_left})
 	append(&world, pt.Sphere{pt.Point3{1, 0, -1}, 0.5, &material_right})
 
 	// Write PPM (Portable Pixmap Format) header, where 255 represents

@@ -1,7 +1,9 @@
 package path_tracer
 
 import "core:fmt"
+import "core:math"
 import "core:math/linalg"
+import "core:math/rand"
 
 Material :: union #no_nil {
 	Lambertian,
@@ -89,10 +91,21 @@ scatter_dielectric :: proc(
 	sin_theta := linalg.sqrt(1 - cos_theta * cos_theta)
 
 	direction := refract(unit_direction, rec.normal, refraction_ratio)
-	if refraction_ratio * sin_theta > 1 {
+	cannot_refract := refraction_ratio * sin_theta > 1
+	reflectance := calculate_reflectance(cos_theta, refraction_ratio) > rand.float64()
+	if cannot_refract ||  reflectance {
 		direction = reflect(unit_direction, rec.normal)
 	}
 
 	scattered^ = Ray{rec.p, direction}
 	return true
+}
+
+@private
+calculate_reflectance :: proc(cosine, reflectance_index: f64) -> f64 {
+	// Reflectivity varies with angle. Use Schlick's approximation to
+	// calculate this reflectance with reasonable accuracy.
+	r0 := (1 - reflectance_index) / (1 + reflectance_index)
+	r0 *= r0
+	return r0 + (1 - r0) * math.pow(1 - cosine, 5)
 }
