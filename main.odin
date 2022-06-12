@@ -19,8 +19,16 @@ IMAGE_HEIGHT :: int(IMAGE_WIDTH / ASPECT_RATIO)
 MAX_DEPTH         ::  50
 SAMPLES_PER_PIXEL :: 100
 
+LOOK_FROM :: pt.Point3{3, 3, 2}
+LOOK_AT   :: pt.Point3{0, 0, -1}
+VIEW_UP   :: pt.Vector3{0, 1, 0}
+APERTURE  :: 2
+
 main :: proc() {
-	camera := pt.init_camera({-2, 2, 1}, {0, 0, -1}, {0, 1, 0}, 90, ASPECT_RATIO)
+	focus_distance := linalg.length(LOOK_FROM - LOOK_AT)
+	camera := pt.init_camera(
+		LOOK_FROM, LOOK_AT, VIEW_UP, 20, ASPECT_RATIO, APERTURE, focus_distance,
+	)
 
 	world: [dynamic]pt.Sphere
 	defer delete(world)

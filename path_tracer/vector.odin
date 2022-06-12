@@ -25,6 +25,17 @@ generate_random_vector_in_unit_sphere :: proc() -> (p: Vector3) {
 	}
 }
 
+generate_random_vector_in_unit_disk :: proc() -> (p: Vector3) {
+	for {
+		// Generate a random point within a unit disk by rejection;
+		// that is, reject points within a unit cube until a point
+		// falls within the bounds of a unit disk.
+		p = {rand.float64_range(-1, 1), rand.float64_range(-1, 1), 0}
+		if linalg.length2(p) >= 1 do continue
+		return
+	}
+}
+
 generate_random_unit_vector :: proc() -> (p: Vector3) {
 	return linalg.normalize(generate_random_vector_in_unit_sphere())
 }
