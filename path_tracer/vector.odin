@@ -14,6 +14,13 @@ generate_random_vector :: #force_inline proc() -> (v: Vector3) {
 	return
 }
 
+generate_random_vector_range :: proc(lo, hi: f64) -> (v: Vector3) {
+	v.x = rand.float64_range(lo, hi)
+	v.y = rand.float64_range(lo, hi)
+	v.z = rand.float64_range(lo, hi)
+	return
+}
+
 generate_random_vector_in_unit_sphere :: proc() -> (p: Vector3) {
 	for {
 		// Generate a random point within a unit radius sphere by

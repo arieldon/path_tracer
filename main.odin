@@ -12,37 +12,67 @@ import pt "path_tracer"
 	right, and z outward.
 */
 
-ASPECT_RATIO :: 16.0 / 9.0
-IMAGE_WIDTH  :: 400
+ASPECT_RATIO :: 3 / 2
+IMAGE_WIDTH  :: 1200
 IMAGE_HEIGHT :: int(IMAGE_WIDTH / ASPECT_RATIO)
 
 MAX_DEPTH         ::  50
-SAMPLES_PER_PIXEL :: 100
+SAMPLES_PER_PIXEL :: 500
 
-LOOK_FROM :: pt.Point3{3, 3, 2}
-LOOK_AT   :: pt.Point3{0, 0, -1}
-VIEW_UP   :: pt.Vector3{0, 1, 0}
-APERTURE  :: 2
+LOOK_FROM      :: pt.Point3{13, 2, 3}
+LOOK_AT        :: pt.Point3{0, 0, 0}
+VIEW_UP        :: pt.Vector3{0, 1, 0}
+FOCUS_DISTANCE :: 10
+APERTURE       :: 0.1
 
 main :: proc() {
-	focus_distance := linalg.length(LOOK_FROM - LOOK_AT)
 	camera := pt.init_camera(
-		LOOK_FROM, LOOK_AT, VIEW_UP, 20, ASPECT_RATIO, APERTURE, focus_distance,
+		LOOK_FROM, LOOK_AT, VIEW_UP, 20, ASPECT_RATIO, APERTURE, FOCUS_DISTANCE,
 	)
 
 	world: [dynamic]pt.Sphere
 	defer delete(world)
 
-	material_ground: pt.Material = pt.Lambertian{pt.Color{0.8, 0.8, 0}}
-	material_center: pt.Material = pt.Lambertian{pt.Color{0.1, 0.2, 0.5}}
-	material_left: pt.Material = pt.Dielectric{1.5}
-	material_right: pt.Material = pt.metal(pt.Color{0.8, 0.6, 0.2}, 0)
+	ground_material: pt.Material = pt.Lambertian{pt.Color{0.5, 0.5, 0.5}}
+	append(&world, pt.Sphere{pt.Point3{0, -1000, 0}, 1000, &ground_material})
 
-	append(&world, pt.Sphere{pt.Point3{0, -100.5, -1}, 100, &material_ground})
-	append(&world, pt.Sphere{pt.Point3{0, 0, -1}, 0.5, &material_center})
-	append(&world, pt.Sphere{pt.Point3{-1, 0, -1}, 0.5, &material_left})
-	append(&world, pt.Sphere{pt.Point3{-1, 0, -1}, -0.4, &material_left})
-	append(&world, pt.Sphere{pt.Point3{1, 0, -1}, 0.5, &material_right})
+	for a in -11..<11 {
+		for b in -11..<11 {
+			choose_material := rand.float64()
+			center := pt.Point3{
+				f64(a) + 0.9 * rand.float64(),
+				0.2,
+				f64(b) + 0.9 * rand.float64()}
+
+			if linalg.length(center - {4, 0.2, 0}) > 0.9 {
+				sphere_material: pt.Material
+				if choose_material < 0.8 {
+					// Create diffuse sphere.
+					u := pt.generate_random_vector()
+					v := pt.generate_random_vector()
+					sphere_material = pt.Lambertian{u * v}
+				} else if choose_material < 0.95 {
+					// Create metal sphere.
+					albedo := pt.generate_random_vector_range(0.5, 1)
+					fuzz := rand.float64_range(0, 0.5)
+					sphere_material = pt.metal(albedo, fuzz)
+				} else {
+					// Create glass sphere.
+					sphere_material = pt.Dielectric{1.5}
+				}
+				append(&world, pt.Sphere{center, 0.2, &sphere_material})
+			}
+		}
+	}
+
+	dielectric: pt.Material = pt.Dielectric{1.5}
+	append(&world, pt.Sphere{pt.Point3{0, 1, 0}, 1, &dielectric})
+
+	diffuse: pt.Material = pt.Lambertian{pt.Color{0.4, 0.2, 0.1}}
+	append(&world, pt.Sphere{pt.Point3{-4, 1, 0}, 1, &diffuse})
+
+	metal: pt.Material = pt.metal(pt.Color{0.7, 0.6, 0.5}, 0)
+	append(&world, pt.Sphere{pt.Point3{4, 1, 0}, 1, &metal})
 
 	// Write PPM (Portable Pixmap Format) header, where 255 represents
 	// maximum value of a color channel.
@@ -50,7 +80,7 @@ main :: proc() {
 
 	// Write pixels in rows from left to right, top to bottom.
 	for j := IMAGE_HEIGHT - 1; j >= 0; j -= 1 {
-		fmt.eprintf("\rscanlines remaining: %3i", j)
+		fmt.eprintf("\rscanlines remaining: %4i", j)
 		for i := 0; i < IMAGE_WIDTH; i += 1 {
 			// Sample each pixel several times and sum the colors
 			// of their rays.
