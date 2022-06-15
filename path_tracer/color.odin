@@ -2,8 +2,9 @@ package path_tracer
 
 import "core:fmt"
 import "core:math/linalg"
+import "core:strings"
 
-write_color :: proc(pixel_color: Color, samples_per_pixel: uint) {
+write_color :: proc(builder: ^strings.Builder, pixel_color: Color, samples_per_pixel: uint) {
 	// Assuming samples_per_pixel > 1, average several colors to blend
 	// foreground with background and create smoother edges, i.e. perform
 	// antialiasing. Take the square root to correct gamma.
@@ -17,5 +18,5 @@ write_color :: proc(pixel_color: Color, samples_per_pixel: uint) {
 
 	// Write the translated color channels to standard output, 1 pixel per
 	// line.
-	fmt.println(r, g, b)
+	fmt.sbprintln(builder, r, g, b)
 }

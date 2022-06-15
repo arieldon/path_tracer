@@ -4,6 +4,7 @@ import "core:fmt"
 import "core:math"
 import "core:math/linalg"
 import "core:math/rand"
+import "core:strings"
 
 import pt "path_tracer"
 
@@ -74,9 +75,13 @@ main :: proc() {
 	metal: pt.Material = pt.metal(pt.Color{0.7, 0.6, 0.5}, 0)
 	append(&world, pt.Sphere{pt.Point3{4, 1, 0}, 1, &metal})
 
+	// Allocate builder for buffered IO.
+	builder := strings.make_builder()
+	defer strings.destroy_builder(&builder)
+
 	// Write PPM (Portable Pixmap Format) header, where 255 represents
 	// maximum value of a color channel.
-	fmt.printf("P3\n%i %i\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT)
+	fmt.sbprintf(&builder, "P3\n%i %i\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT)
 
 	// Write pixels in rows from left to right, top to bottom.
 	for j := IMAGE_HEIGHT - 1; j >= 0; j -= 1 {
@@ -95,10 +100,12 @@ main :: proc() {
 			}
 
 			// Use the average color of all samples in the image.
-			pt.write_color(pixel_color, SAMPLES_PER_PIXEL);
+			pt.write_color(&builder, pixel_color, SAMPLES_PER_PIXEL);
 		}
 	}
 	fmt.eprintln()
+
+	fmt.println(strings.to_string(builder))
 }
 
 lerp :: #force_inline proc(start_value, end_value: pt.Color, t: f64) -> pt.Color {
