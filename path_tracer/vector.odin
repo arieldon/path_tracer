@@ -14,7 +14,7 @@ generate_random_vector :: #force_inline proc() -> (v: Vector3) {
 	return
 }
 
-generate_random_vector_range :: proc(lo, hi: f64) -> (v: Vector3) {
+generate_random_vector_range :: #force_inline proc(lo, hi: f64) -> (v: Vector3) {
 	v.x = rand.float64_range(lo, hi)
 	v.y = rand.float64_range(lo, hi)
 	v.z = rand.float64_range(lo, hi)
