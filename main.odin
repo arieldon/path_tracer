@@ -95,7 +95,11 @@ main :: proc() {
 				// on the screen.
 				u := (f64(i) + rand.float64())  / f64(IMAGE_WIDTH - 1)
 				v := (f64(j) + rand.float64()) / f64(IMAGE_HEIGHT - 1)
+
+				// Calculate ray from camera to pixel.
 				r := pt.get_ray(&camera, u, v)
+
+				// Compute color of ray.
 				pixel_color += ray_color(&r, world, MAX_DEPTH)
 			}
 

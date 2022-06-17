@@ -1,5 +1,16 @@
 package path_tracer
 
+
+/*
+	Given a line and some point, each part of the line split by the point
+	is a ray. A ray consists of an origin, i.e. that point, and a
+	direction, the direction of the line split by the point.
+*/
+Ray :: struct {
+	origin: Point3,
+	direction: Vector3,
+}
+
 /*
 	The function P(t) = A + tb represents a ray mathematically.
 
@@ -11,13 +22,6 @@ package path_tracer
 
 	This equation equates to y = mx + b from basic algebra.
 */
-
-Ray :: struct {
-	origin: Point3,
-	direction: Vector3,
-}
-
-// Encode P(t) = A + tb in Odin.
 at :: proc(r: ^Ray, t: f64) -> Point3 {
 	return r.origin + t * r.direction;
 }

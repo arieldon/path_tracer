@@ -21,6 +21,7 @@ hit :: proc(world: [dynamic]Sphere, r: ^Ray, t_min, t_max: f64, rec: ^Hit_Record
 	closest_hit := t_max
 	hit_anything := false
 
+	// Determine which objects the ray intersects.
 	for _, i in world {
 		if hit_sphere(&world[i], r, t_min, closest_hit, &tmp_rec) {
 			hit_anything = true

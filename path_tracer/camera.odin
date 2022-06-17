@@ -16,6 +16,13 @@ init_camera :: proc(
 ) -> (c: Camera) {
 	theta := math.to_radians(vertical_fov)
 	h := math.tan(theta / 2)
+
+	/*
+		The viewport is a region of the screen used to display some
+		portion of the scene; it's a 2D rectangle onto which a 3D scene
+		is projected. The aspect ratio of the viewport should be the
+		same as that of the scene.
+	*/
 	viewport_height := 2 * h
 	viewport_width := aspect_ratio * viewport_height
 
